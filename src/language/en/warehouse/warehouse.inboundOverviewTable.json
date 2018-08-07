@@ -1,0 +1,20 @@
+{
+  "inboundNo": "Inbound No.",
+  "inboundDate": "Inbound Date",
+  "warehouseNo": "Warehouse No.",
+  "warehouseName": "Warehouse Name",
+  "purchaser": "Purchaser",
+  "storageType": "Inbound Type",
+  "skuTotalQty": "Total Inbound QTY",
+  "remark": "Remark",
+  "operator": "Operator",
+  "updateDt": "Modify Date",
+  "createDt": "Create Date",
+  "carrier": "Carrier",
+  "carrierPhone": "Carrier Phone",
+  "skuTotalVolume": "Total volume of Inbound",
+  "skuTotalNetWeight": "Total N.W. of Inbound",
+  "skuTotalGrossWeight": "Total G.W. of Inbound",
+  "updateName": "Operator",
+  "entryDt": "Create Time"
+}

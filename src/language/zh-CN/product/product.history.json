@@ -1,0 +1,12 @@
+{
+  "quotationNo": "客户询价单号",
+  "orderNo": "合同号",
+  "unitPrice": "采购单价",
+  "skuPrice": "采购总价",
+  "totalQty": "订单总数量",
+  "actDeliveryDt": "交货日期",
+  "confirmQcDt": "验货日期",
+  "actDepartureDt": "发运日期",
+  "totalContainerQty": "发运数量",
+  "skuQty": "产品采购数量"
+}

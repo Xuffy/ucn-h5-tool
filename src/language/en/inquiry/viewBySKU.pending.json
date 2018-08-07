@@ -1,0 +1,23 @@
+{
+  "inquiryNo": "Inquiry No.",
+  "quotationNo": "Quotation No.",
+  "entryDt": "Inquiry Date",
+  "status": "Status",
+  "supplierName": "Supplier name",
+  "skuCode": "Supplier SKU code",
+  "skuNameEN": "SKU name EN",
+  "price": "Price",
+  "currency": "Currency",
+  "skuFobCurrency": "Fob Currency",
+  "skuExwCurrency": "Exw Currency",
+  "skuCifCurrency": "Cif Currency",
+  "skuDduCurrency": "Ddu Currency",
+  "skuFobPrice": "Fob Price",
+  "skuExwPrice": "Exw Price",
+  "skuCifPrice": "Cif Price",
+  "skuDduPrice": "Ddu Price",
+  "incoterm": "Incoterm",
+  "departurePort": "Departure port",
+  "destinationPort": "Destination port",
+  "remark": "Inquiry remark"
+}
