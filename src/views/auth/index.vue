@@ -1,39 +1,71 @@
 <template>
   <div class="auth">
+    <!--<el-upload
+      :action="$apis.IMPORTFILE_IMPORTTASKE"
+      :before-upload="uploadBefore"
+      :data="{templateCode:'BIZ_RESOURCE_IMPORT'}"
+      name="importFile">
+      <el-button size="small" type="primary">导入到数据库</el-button>
+    </el-upload>-->
+    <br>
     <el-input
       type="textarea"
       :rows="10"
       placeholder="请复制Excel到这里"
       v-model="excelContent">
     </el-input>
-    <div style="display: flex;justify-content: space-between;margin: 10px 0">
+    <div style="display: flex;justify-content: space-between;margin: 10px 0;align-items: center">
       <el-button type="primary" @click="ctyperow">生成权限树</el-button>
       <el-button type="success" @click="doneExcel">生成Excel</el-button>
     </div>
 
     <el-tree
       :data="treeData"
-      node-key="code"
+      node-key="id"
       ref="tree"
       :default-expanded-keys="defaultExpanded"
       :expand-on-click-node="false">
-      <div class="custom-tree-node" slot-scope="{ node, data }">
+      <div class="custom-tree-node" slot-scope="{ node, data }" :class="{isDelete:data.is_delete}">
         <div class="label">
-          <el-input v-model="data.name_zh" placeholder="请输入中文名称"></el-input>
+          <el-input v-model="data.name_zh" :disabled="data.is_delete" placeholder="请输入中文名称"
+                    @change="changeName(data)"></el-input>
         </div>
         <div class="label">
-          <el-input v-model="data.name_en" placeholder="请输入英文名称"></el-input>
+          <el-input v-model="data.name_en" :disabled="data.is_delete" placeholder="请输入英文名称"
+                    @change="changeName(data)"></el-input>
         </div>
-        <div @click="appendTree(data)">
+        <div @click="appendTree(data)" v-if="data.code" class="icon add">
           <i class="el-icon-circle-plus" style="display: inline-block;font-size: 18px;vertical-align: middle"></i>
           <span style="display: inline-block;vertical-align: middle">添加</span>
         </div>
-        <div @click="removeTree(node, data)" v-if="!data.name_zh || !data.name_en">
+        <div @click="deleteTree(data)" v-if="data.code" class="icon delete">
+          <i class="el-icon-delete" style="display: inline-block;font-size: 18px;vertical-align: middle"></i>
+          <span style="display: inline-block;vertical-align: middle">
+          {{data.is_delete ? '撤回移除':'移除'}}
+          </span>
+        </div>
+        <div @click="removeTree(node, data)" v-if="!data.name_zh || !data.name_en" class="icon remove">
           <i class="el-icon-remove" style="display: inline-block;font-size: 18px;vertical-align: middle"></i>
           <span style="display: inline-block;vertical-align: middle">删除</span>
         </div>
       </div>
     </el-tree>
+
+
+    <el-dialog title="需要登录" :visible.sync="loginDialog">
+      <el-form :model="login">
+        <el-form-item label="用户名">
+          <el-input v-model="login.email"></el-input>
+        </el-form-item>
+        <el-form-item label="密码">
+          <el-input type="password" v-model="login.password"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="loginDialog = false">取 消</el-button>
+        <el-button type="primary" @click="submitLogin">确 定</el-button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
@@ -45,17 +77,20 @@
     components: {},
     data() {
       return {
+        loginDialog: false,
         excelContent: '',
         treeData: [],
         defaultExpanded: [],
-        excelData: []
+        excelData: [],
+        login: {
+          email: '', partnerType: '1', password: ''
+        }
       }
     },
     created() {
-      this.treeData = this.$sessionStore.get('tree-data');
+      this.treeData = this.$localStore.get('tree-data');
     },
     mounted() {
-
     },
     computed: {},
     methods: {
@@ -63,21 +98,37 @@
         this.excelData = [];
         this.recursionBuildJson(this.treeData);
         this.excelData = _.map(this.excelData, val => {
-          let {code, name_en, name_zh, parent_code, partner_type, type} = val;
-          if (!code) {
-            let ne = name_en.trim().replace(new RegExp(' ', 'g'), '_');
-            code = `${parent_code}:${ne}`.toLocaleUpperCase();
+          if (!val.code) {
+            let ne = val.name_en.trim().replace(new RegExp(' ', 'g'), '_');
+            val.code = `${val.parent_code}:${ne}`.toLocaleUpperCase();
           }
           return {
-            'code|*': code,
-            'nameEn': name_en,
-            'nameZh': name_zh,
-            'parentCode': parent_code,
-            'partnerType|*': partner_type,
-            'type|*': type
+            'code|*': val.code,
+            'nameEn': val.name_en,
+            'nameZh': val.name_zh,
+            'parentCode': val.parent_code,
+            'partnerType|*': val.partner_type,
+            'type|*': val.type,
+            is_delete: val.is_delete,
+            modify_remark: val.modify_remark
           };
         });
         this.jsonToExcel(this.excelData);
+      },
+      deleteTree(data) {
+        this.$set(data, 'is_delete', !data.is_delete);
+      },
+      submitLogin() {
+        this.$ajax.post(this.$apis.AUTHENTICATION_SIGNIN, this.login).then(res => {
+          console.log(res)
+        });
+      },
+      uploadBefore(file) {
+        this.loginDialog = true;
+        return false;
+      },
+      changeName(data) {
+        data.modify_remark = this.$dateFormat(new Date(), 'yyyy-mm-dd HH:MM:ss')
       },
       removeTree(node, data) {
         const parent = node.parent;
@@ -86,22 +137,20 @@
         children.splice(index, 1);
       },
       appendTree(data) {
-        console.log(data)
         let child = this.$depthClone(data);
-        this.defaultExpanded = [data.code]
-        data.children = data.children || [];
+        this.defaultExpanded = [data.id]
         child.name_zh = ''
         child.name_en = ''
         child.children = [];
         child.parent_code = child.code;
         child.code = '';
         child.type = Number(child.type) + 1;
-        data.children = [child].concat(data.children);
+        this.$set(data, 'children', [child].concat(data.children || []));
       },
       dataFilter(data) {
         let tree = [];
         this.treeData = this.recursionBuildTree(data);
-        this.$sessionStore.set('tree-data', this.treeData)
+        this.$localStore.set('tree-data', this.treeData)
       },
       recursionBuildJson(data) {
         _.map(data, val => {
@@ -118,13 +167,14 @@
         var result = [], temp;
         for (var i = 0; i < data.length; i++) {
           if (data[i].code && data[i].parent_code == pcode) {
-            var obj = data[i];
+            var obj = {code, name_en, name_zh, parent_code, partner_type, type, is_delete, modify_remark} = data[i];
             if (data[i].type === '1' || data[i].type === '2' || data[i].type === '3' || data[i].type === '4') {
               temp = this.recursionBuildTree(data, data[i].code);
             }
             if (temp.length > 0) {
               obj.children = temp;
             }
+            obj.id = this.$getUUID();
             result.push(obj);
           }
         }
@@ -209,8 +259,7 @@
         for (var i = 0; i < values.length; i++) {
           html += values[i].join(fgf) + '\n';
         }
-        var content = html;
-        var blob = new Blob([content], {type: 'text/plain;charset=utf-8'});
+        var blob = new Blob([html], {type: 'text/plain;charset=utf-8'});
         saveAs(blob, `功能权限树 ${this.$dateFormat(new Date(), 'yyyy-mm-dd HH:MM')}.csv`);
       }
     }
@@ -224,6 +273,10 @@
     width: 100%;
   }
 
+  .custom-tree-node.isDelete {
+    background-color: #dedede;
+  }
+
   .custom-tree-node .label {
     display: inline-block;
     min-width: 200px;
@@ -233,12 +286,13 @@
     margin-right: 10px;
   }
 
-  .custom-tree-node i {
+  .custom-tree-node .icon {
     color: #409eff;
   }
 
-  .custom-tree-node i.el-icon-remove {
-    color: red;
+  .custom-tree-node .icon.remove,
+  .custom-tree-node .icon.delete {
+    color: #f56c6c;
   }
 
   .auth /deep/ .el-tree-node__content {
@@ -246,7 +300,7 @@
     line-height: 45px;
   }
 
-  .auth /deep/ .el-input__inner {
+  .auth .custom-tree-node /deep/ .el-input__inner {
     border: none;
   }
 </style>

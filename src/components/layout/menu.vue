@@ -9,7 +9,7 @@
       <el-menu-item-group>
         <el-menu-item index="1-0">
           <router-link to="/">
-            <el-tooltip :disabled="!layout.hideMenu" effect="dark" content="菜单1" placement="right">
+            <el-tooltip :disabled="!layout.hideMenu" effect="dark" content="前端辅助工具" placement="right">
               <i class="el-icon-menu"></i>
             </el-tooltip>
             <span>前端辅助工具</span>
